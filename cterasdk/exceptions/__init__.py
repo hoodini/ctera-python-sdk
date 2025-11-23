@@ -6,7 +6,8 @@ from . import (  # noqa: E402, F401
     io,
     notifications,
     session,
-    transport
+    transport,
+    ratelimit
 )
 
 from .base import CTERAException

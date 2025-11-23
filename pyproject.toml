@@ -31,6 +31,7 @@ Documentation = "https://ctera-python-sdk.readthedocs.io/en/latest/"
 
 [project.scripts]
 "cterasdk.io.direct.download" = "cterasdk.direct.cli:download_object"
+"ctera" = "cterasdk.cli.main:main"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
