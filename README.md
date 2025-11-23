@@ -8,6 +8,291 @@
 
 A powerful Python SDK for automating and managing CTERA's Global File System. This library makes it easy to control cloud storage, configure edge devices, manage users, and handle file operations programmatically.
 
+## 🎬 TL;DR - What Is This Repo?
+
+**Imagine you're managing a company's file storage across multiple offices and the cloud.** This SDK is your automation toolkit that lets you write Python scripts to control everything, instead of clicking through web interfaces.
+
+### Real-World Example: Your First Day as IT Admin
+
+Let's say you just joined a company with 50 employees across 3 offices. Here's what you can do with this SDK:
+
+```python
+from cterasdk import GlobalAdmin, Edge
+
+# Step 1: Connect to your company's cloud portal
+portal = GlobalAdmin('mycompany-portal.ctera.com')
+portal.login('admin', 'your-password')
+
+# Step 2: Create accounts for 10 new employees (in seconds, not hours!)
+new_employees = [
+    {'username': 'sarah.jones', 'email': 'sarah@company.com', 'first': 'Sarah', 'last': 'Jones'},
+    {'username': 'mike.chen', 'email': 'mike@company.com', 'first': 'Mike', 'last': 'Chen'},
+    # ... 8 more employees
+]
+
+for emp in new_employees:
+    portal.users.add(emp['username'], emp['email'], emp['first'], emp['last'])
+    print(f"✅ Created account for {emp['first']} {emp['last']}")
+
+# Step 3: Set up a new office storage device
+office_device = Edge('192.168.10.50')  # IP of device in New York office
+office_device.login('admin', 'device-password')
+
+# Create a shared folder for the marketing team
+office_device.shares.add('Marketing-Files', '/data/marketing')
+
+# Enable automatic cloud backup
+office_device.sync.enable()
+office_device.backup.enable()
+
+print("🎉 Done! 10 users created, new office device configured, backups enabled!")
+```
+
+**That's it!** In just 20 lines of Python, you've done what would take hours manually.
+
+### 🔧 What Problems Does This Solve?
+
+| Without This SDK | With This SDK |
+|------------------|---------------|
+| Manually click through web portal to add each user | Run a script, create 100 users in seconds |
+| Drive to each office to configure devices | Configure all devices remotely from your laptop |
+| Log into each device individually to check status | Query all devices at once and generate reports |
+| Manually copy files between systems | Automate file migrations with error handling |
+| Hope someone remembered to backup configs | Schedule automated backups with verification |
+
+### 💡 Common Everyday Scenarios
+
+**Scenario 1: New Employee Onboarding**
+```python
+# Instead of filling forms for 30 minutes...
+portal = GlobalAdmin('portal.company.com')
+portal.login('admin', 'password')
+
+# Create user, assign to groups, allocate storage - all in one script
+portal.users.add('new.employee', 'new@company.com', 'New', 'Employee')
+portal.users.add_to_group('new.employee', 'Engineering')
+portal.users.set_quota('new.employee', quota_gb=100)
+```
+
+**Scenario 2: Office Device Health Check**
+```python
+# Check all your office devices in a morning report
+devices = ['192.168.1.10', '192.168.2.10', '192.168.3.10']  # NY, LA, Chicago
+
+for ip in devices:
+    device = Edge(ip)
+    device.login('admin', 'password')
+    status = device.power.status()
+    print(f"Office {ip}: CPU={status.cpu}%, Memory={status.memory}%, Status={status.health}")
+```
+
+**Scenario 3: Automated File Cleanup**
+```python
+# Delete old files automatically (e.g., temp files older than 30 days)
+import datetime
+
+portal = GlobalAdmin('portal.company.com')
+portal.login('admin', 'password')
+
+files = portal.cloudfs.list_folder('/temp-files')
+cutoff_date = datetime.datetime.now() - datetime.timedelta(days=30)
+
+for file in files:
+    if file.modified_date < cutoff_date:
+        portal.cloudfs.delete(f'/temp-files/{file.name}')
+        print(f"🗑️ Deleted old file: {file.name}")
+```
+
+## 🏗️ Architecture Overview
+
+Here's how all the pieces fit together:
+
+```mermaid
+graph TB
+    subgraph "Your Python Script"
+        A[Your Code]
+    end
+    
+    subgraph "CTERA SDK - High Level APIs"
+        B[GlobalAdmin<br/>Complete Portal Control]
+        C[Edge<br/>Device Management]
+        D[AsyncGlobalAdmin<br/>High Performance]
+        E[Drive<br/>Personal Storage]
+    end
+    
+    subgraph "CTERA SDK - Core Modules"
+        F[core module<br/>Portal Operations]
+        G[edge module<br/>Device Operations]
+        H[asynchronous module<br/>Async Operations]
+        I[direct module<br/>Fast File Access]
+    end
+    
+    subgraph "CTERA SDK - Infrastructure"
+        J[clients<br/>HTTP/REST Communication]
+        K[lib<br/>Sessions & Retries]
+        L[exceptions<br/>Error Handling]
+        M[convert<br/>Data Serialization]
+    end
+    
+    subgraph "CTERA Infrastructure"
+        N[CTERA Portal<br/>Cloud Management]
+        O[Edge Device 1<br/>Office NY]
+        P[Edge Device 2<br/>Office LA]
+        Q[Edge Device 3<br/>Office Chicago]
+        R[Cloud Storage<br/>Files & Backups]
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    
+    B --> F
+    C --> G
+    D --> H
+    E --> F
+    
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K
+    J --> L
+    J --> M
+    
+    F --> N
+    G --> O
+    G --> P
+    G --> Q
+    
+    N --> R
+    O --> R
+    P --> R
+    Q --> R
+    
+    style A fill:#e1f5ff
+    style B fill:#b3e5fc
+    style C fill:#b3e5fc
+    style D fill:#b3e5fc
+    style E fill:#b3e5fc
+    style N fill:#ffecb3
+    style O fill:#ffecb3
+    style P fill:#ffecb3
+    style Q fill:#ffecb3
+    style R fill:#c8e6c9
+```
+
+## 🗺️ SDK Component Flow
+
+This diagram shows how the SDK components work together when you make a typical API call:
+
+```mermaid
+flowchart LR
+    subgraph "1. Your Application"
+        A[Python Script]
+    end
+    
+    subgraph "2. Object Layer"
+        B[GlobalAdmin<br/>or Edge Object]
+    end
+    
+    subgraph "3. Module Layer"
+        C[Specific Module<br/>users/devices/shares]
+    end
+    
+    subgraph "4. Client Layer"
+        D[HTTP Client]
+        E[Session Manager]
+        F[Retry Logic]
+    end
+    
+    subgraph "5. Data Layer"
+        G[Serializers]
+        H[Deserializers]
+    end
+    
+    subgraph "6. Transport"
+        I[REST API Calls]
+    end
+    
+    subgraph "7. CTERA System"
+        J[Portal/Device]
+        K[Response]
+    end
+    
+    A -->|"admin.users.add()"| B
+    B -->|Route to module| C
+    C -->|Prepare request| D
+    D --> E
+    E --> F
+    F --> G
+    G -->|JSON/XML| I
+    I -->|HTTPS| J
+    J -->|Response| K
+    K -->|Parse| H
+    H -->|Return object| A
+    
+    style A fill:#e3f2fd
+    style B fill:#bbdefb
+    style C fill:#90caf9
+    style D fill:#fff9c4
+    style E fill:#fff59d
+    style F fill:#fff176
+    style G fill:#c8e6c9
+    style H fill:#a5d6a7
+    style I fill:#ffccbc
+    style J fill:#ff8a65
+    style K fill:#ffab91
+```
+
+## 🔄 Complete Usage Flow Example
+
+Here's what happens behind the scenes when you run a simple command:
+
+```mermaid
+sequenceDiagram
+    participant User as Your Python Script
+    participant GA as GlobalAdmin Object
+    participant UM as Users Module
+    participant Client as HTTP Client
+    participant Session as Session Manager
+    participant Portal as CTERA Portal
+    participant DB as Portal Database
+    
+    User->>GA: admin.login('username', 'pass')
+    GA->>Client: POST /login
+    Client->>Portal: HTTPS Request
+    Portal->>DB: Validate credentials
+    DB-->>Portal: User valid
+    Portal-->>Client: Session token
+    Client->>Session: Store session
+    Session-->>GA: Authenticated
+    GA-->>User: Login successful
+    
+    Note over User,DB: Now let's create a user
+    
+    User->>GA: admin.users.add('john.doe', ...)
+    GA->>UM: add() with parameters
+    UM->>Client: POST /users
+    Client->>Session: Add session token
+    Client->>Portal: HTTPS + Auth token
+    Portal->>DB: Create user record
+    DB-->>Portal: User created (ID: 12345)
+    Portal-->>Client: Success response
+    Client->>UM: Parse response
+    UM-->>GA: User object
+    GA-->>User: New user created
+    
+    Note over User,DB: Finally logout
+    
+    User->>GA: admin.logout()
+    GA->>Client: POST /logout
+    Client->>Portal: End session
+    Portal->>Session: Invalidate token
+    Session-->>User: Logged out
+```
+
 ## 🎯 What Does This SDK Do?
 
 Think of CTERA as a global file system that works across cloud and edge devices. This SDK is your remote control for that system. With it, you can:
